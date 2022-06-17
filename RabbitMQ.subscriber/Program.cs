@@ -1,7 +1,9 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace RabbitMQ.subscriber
 {
@@ -13,17 +15,18 @@ namespace RabbitMQ.subscriber
             factory.Uri = new Uri("amqps://dhqyhvke:5ukMea46fWrkSxEq53cPQxBqr9N92sEQ@moose.rmq.cloudamqp.com/dhqyhvke");
             using var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
-            // eğer publisher'in gerçektend kuyruğu oluşturduğundan emin isek aşağıdaki tanımlamayı silebiliriz
-            //  NOT: her iki tarafın da konfigüsasyonu ayanı olmalıdır. Diğer türlü hata verecektir.
-            //channel.QueueDeclare("hello-queue", true, false, false);
-
+            
+            channel.BasicQos(0, 1, false);
             var consumer = new EventingBasicConsumer(channel);
-            // autoAck: bu property : biz buna true verir isek RabbitMQ subscriber'e bir mesaj gönderidiğinde bu mesaj doğru da işlense yanlış da işlense 
-            // kuyruktan siler, şayet biz bunu false yapar isek RabbitMQ'ya diyoruz ki sen bunu kuyruktan silme, ben gelen mesajı doğru bir şekilde işler isem o zaman ben sana haber vericem anlamını taşımaktadır.
-            channel.BasicConsume("hello-queue", true, consumer);
+            channel.BasicConsume("hello-queue", false, consumer);
+
             consumer.Received += (object sender, BasicDeliverEventArgs e) =>
             {
                 var message = Encoding.UTF8.GetString(e.Body.ToArray());
+
+                Thread.Sleep(1500);
+                Console.WriteLine("Gelen Mesaj" + message);
+                channel.BasicAck(e.DeliveryTag, false);
             };
             Console.ReadLine();
         }
