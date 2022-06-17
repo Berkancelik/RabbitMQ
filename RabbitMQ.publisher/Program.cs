@@ -1,4 +1,6 @@
-﻿using System;
+﻿using RabbitMQ.Client;
+using System;
+using System.Text;
 
 namespace RabbitMQ.publisher
 {
@@ -6,7 +8,18 @@ namespace RabbitMQ.publisher
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var factory = new ConnectionFactory();
+            factory.Uri = new Uri("amqps://dhqyhvke:5ukMea46fWrkSxEq53cPQxBqr9N92sEQ@moose.rmq.cloudamqp.com/dhqyhvke");
+            using var connection = factory.CreateConnection();
+            var channel = connection.CreateModel();           
+            channel.QueueDeclare("hello-queue", true, false, false);
+           string message = "hello world";
+            var messageBody = Encoding.UTF8.GetBytes(message);
+            channel.BasicPublish(string.Empty, "hello-queue", null, messageBody);
+            Console.WriteLine("Mesaj başarılı şekilde gönderilmiştir");
+            Console.ReadLine();
         }
+
+
     }
 }
