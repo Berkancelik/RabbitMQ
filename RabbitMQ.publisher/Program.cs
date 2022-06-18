@@ -1,8 +1,10 @@
 ﻿using RabbitMQ.Client;
+using Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 
 namespace RabbitMQ.publisher
 {
@@ -20,8 +22,7 @@ namespace RabbitMQ.publisher
         static void Main(string[] args)
         {
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri("amqps://uhshoatb:4tRfDsemduk6BCrsZaIvfQgOhLsMtf-t@fish.rmq.cloudamqp.com/uhshoatb");
-
+            factory.Uri = new Uri("amqps://dhqyhvke:5ukMea46fWrkSxEq53cPQxBqr9N92sEQ@moose.rmq.cloudamqp.com/dhqyhvke");
             using var connection = factory.CreateConnection();
 
             var channel = connection.CreateModel();
@@ -38,8 +39,11 @@ namespace RabbitMQ.publisher
             properties.Headers = headers;
             properties.Persistent = true;
 
+            var product = new Product { Id = 1, Name = "Kalem", Price = 100, Stock = 10 };
+            var productJsonString = JsonSerializer.Serialize(product);
 
-            channel.BasicPublish("header-exchange", string.Empty, properties, Encoding.UTF8.GetBytes("header mesajım"));
+
+            channel.BasicPublish("header-exchange", string.Empty, properties, Encoding.UTF8.GetBytes(productJsonString));
 
             Console.WriteLine("mesaj gönderilmiştir");
 
