@@ -5,28 +5,63 @@ using System.Text;
 
 namespace RabbitMQ.publisher
 {
-    internal class Program
+    public enum LogNames
+    {
+        Critical = 1,
+        Error = 2,
+        Warning = 3,
+        Info = 4
+    }
+
+
+    class Program
     {
         static void Main(string[] args)
         {
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri("amqps://dhqyhvke:5ukMea46fWrkSxEq53cPQxBqr9N92sEQ@moose.rmq.cloudamqp.com/dhqyhvke");
+            factory.Uri = new Uri("amqps://uhshoatb:4tRfDsemduk6BCrsZaIvfQgOhLsMtf-t@fish.rmq.cloudamqp.com/uhshoatb");
+
             using var connection = factory.CreateConnection();
+
             var channel = connection.CreateModel();
 
-            channel.ExchangeDeclare("logs-fanout", durable: true, type: ExchangeType.Fanout);
-            
-            Enumerable.Range(1, 50).ToList().ForEach(x =>
+            channel.ExchangeDeclare("logs-direct", durable: true, type: ExchangeType.Direct);
+
+
+            Enum.GetNames(typeof(LogNames)).ToList().ForEach(x =>
             {
-                string message = $"log{x}";
-                var messageBody = Encoding.UTF8.GetBytes(message);
-                channel.BasicPublish("logs-fanout"," ",null, messageBody);
-                Console.WriteLine("Mesaj başarılı şekilde gönderilmiştir");
+                var routeKey = $"route-{x}";
+                var queueName = $"direct-queue-{x}";
+                channel.QueueDeclare(queueName, true, false, false);
+
+                channel.QueueBind(queueName, "logs-direct", routeKey, null);
 
             });
+
+
+
+            Enumerable.Range(1, 50).ToList().ForEach(x =>
+            {
+
+                LogNames log = (LogNames)new Random().Next(1, 5);
+
+                string message = $"log-type: {log}";
+
+                var messageBody = Encoding.UTF8.GetBytes(message);
+
+                var routeKey = $"route-{log}";
+
+                channel.BasicPublish("logs-direct", routeKey, null, messageBody);
+
+                Console.WriteLine($"Log gönderilmiştir : {message}");
+
+            });
+
+
+
             Console.ReadLine();
+
+
         }
-
-
     }
 }
